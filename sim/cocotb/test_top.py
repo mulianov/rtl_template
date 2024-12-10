@@ -1,42 +1,34 @@
 import os
 from glob import glob
+from pathlib import Path
 
-from cocotb_test.simulator import run
+from cocotb_tools.runner import get_runner
 
 tests_dir = os.path.abspath(os.path.dirname(__file__))
-rtl_dir = os.path.abspath(os.path.join(tests_dir, '..', '..', 'rtl'))
+rtl_dir = os.path.abspath(os.path.join(tests_dir, "..", "..", "rtl"))
 
-def test_top():
-    dut = "top"
-    module = os.path.splitext(os.path.basename(__file__))[0]
-    toplevel = dut
+
+def test_top_runner():
+    hdl_toplevel_lang = "verilog"
+    sim = os.getenv("COCOTB_SIM", "icarus")
+    dut = os.getenv("module_top", "top")
 
     verilog_sources = glob(rtl_dir + "/*.sv")
-    # [
-        # os.path.join(rtl_dir, f"{dut}.sv"),
-        # os.path.join(rtl_dir, f"fifo.sv"),
-    # ]
 
-    # parameters = {}
-    # parameters['ADDR_WIDTH'] = 32
-    # extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
-
-    run(
-        python_search=[tests_dir],
-        simulator="icarus",
-        verilog_sources=verilog_sources, # sources
-        toplevel=toplevel,            # top level HDL
-        module=module,        # name of cocotb test module
+    runner = get_runner(sim)
+    runner.build(
+        sources=verilog_sources,
+        hdl_toplevel=dut,
+        always=True,
         waves=True,
-        # parameters=parameters,
-        # extra_env=extra_env,
-        # gui=True,
-        # python_search
-        # includes
-        # defines
-        # compile_args
-        # sim_args = ["-fst"]
-        # plus_args
-        # seed
-        # extra_env
+        verbose=True,
     )
+    runner.test(
+        hdl_toplevel="top",
+        test_module="top_cocotb,",
+        waves=True,
+    )
+
+
+if __name__ == "__main__":
+    test_top_runner()
